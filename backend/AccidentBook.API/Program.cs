@@ -46,11 +46,11 @@ builder.Services.AddScoped<IAccidentService, AccidentService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 // Only use HTTPS redirection if not on Render (which handles HTTPS)
 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")))
