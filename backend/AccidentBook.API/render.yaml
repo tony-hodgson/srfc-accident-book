@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: sunderland-rfc-accident-api
+    env: dotnet
+    plan: free
+    buildCommand: dotnet restore && dotnet publish -c Release -o ./publish
+    startCommand: ./publish/AccidentBook.API
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+

@@ -1,0 +1,186 @@
+<div class="accident-form">
+  <h2 class="mb-4">{{ isEditMode ? 'Edit Accident Record' : 'New Accident Record' }}</h2>
+
+  <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success" role="alert">
+    {{ successMessage }}
+  </div>
+
+  <form [formGroup]="accidentForm" (ngSubmit)="onSubmit()">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="dateOfAccident" class="form-label">Date of Accident *</label>
+        <input
+          type="date"
+          class="form-control"
+          id="dateOfAccident"
+          formControlName="dateOfAccident"
+          [class.is-invalid]="accidentForm.get('dateOfAccident')?.invalid && accidentForm.get('dateOfAccident')?.touched">
+        <div class="invalid-feedback" *ngIf="accidentForm.get('dateOfAccident')?.invalid && accidentForm.get('dateOfAccident')?.touched">
+          {{ getFieldError('dateOfAccident') }}
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="timeOfAccident" class="form-label">Time of Accident *</label>
+        <input
+          type="time"
+          class="form-control"
+          id="timeOfAccident"
+          formControlName="timeOfAccident"
+          [class.is-invalid]="accidentForm.get('timeOfAccident')?.invalid && accidentForm.get('timeOfAccident')?.touched">
+        <div class="invalid-feedback" *ngIf="accidentForm.get('timeOfAccident')?.invalid && accidentForm.get('timeOfAccident')?.touched">
+          {{ getFieldError('timeOfAccident') }}
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="location" class="form-label">Location *</label>
+        <input
+          type="text"
+          class="form-control"
+          id="location"
+          formControlName="location"
+          placeholder="e.g., Main pitch, Training ground"
+          [class.is-invalid]="accidentForm.get('location')?.invalid && accidentForm.get('location')?.touched">
+        <div class="invalid-feedback" *ngIf="accidentForm.get('location')?.invalid && accidentForm.get('location')?.touched">
+          {{ getFieldError('location') }}
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="opposition" class="form-label">Opposition</label>
+        <input
+          type="text"
+          class="form-control"
+          id="opposition"
+          formControlName="opposition"
+          placeholder="e.g., Durham City RFC, Training session"
+          [class.is-invalid]="accidentForm.get('opposition')?.invalid && accidentForm.get('opposition')?.touched">
+        <div class="invalid-feedback" *ngIf="accidentForm.get('opposition')?.invalid && accidentForm.get('opposition')?.touched">
+          {{ getFieldError('opposition') }}
+        </div>
+        <small class="form-text text-muted">Enter the opposing team if during a match, or leave blank for training</small>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="personInvolved" class="form-label">Person Involved *</label>
+        <input
+          type="text"
+          class="form-control"
+          id="personInvolved"
+          formControlName="personInvolved"
+          placeholder="Full name"
+          [class.is-invalid]="accidentForm.get('personInvolved')?.invalid && accidentForm.get('personInvolved')?.touched">
+        <div class="invalid-feedback" *ngIf="accidentForm.get('personInvolved')?.invalid && accidentForm.get('personInvolved')?.touched">
+          {{ getFieldError('personInvolved') }}
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="age" class="form-label">Age (If under 18)</label>
+        <input
+          type="number"
+          class="form-control"
+          id="age"
+          formControlName="age"
+          placeholder="Enter age if person is under 18"
+          min="1"
+          max="17"
+          [class.is-invalid]="accidentForm.get('age')?.invalid && accidentForm.get('age')?.touched">
+        <div class="invalid-feedback" *ngIf="accidentForm.get('age')?.invalid && accidentForm.get('age')?.touched">
+          {{ getFieldError('age') }}
+        </div>
+        <small class="form-text text-muted">Only required if the person involved is under 18 years old</small>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="personReporting" class="form-label">Person Reporting *</label>
+      <input
+        type="text"
+        class="form-control"
+        id="personReporting"
+        formControlName="personReporting"
+        placeholder="Your full name"
+        [class.is-invalid]="accidentForm.get('personReporting')?.invalid && accidentForm.get('personReporting')?.touched">
+      <div class="invalid-feedback" *ngIf="accidentForm.get('personReporting')?.invalid && accidentForm.get('personReporting')?.touched">
+        {{ getFieldError('personReporting') }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="description" class="form-label">Description of Accident *</label>
+      <textarea
+        class="form-control"
+        id="description"
+        formControlName="description"
+        rows="4"
+        placeholder="Provide a detailed description of what happened..."
+        [class.is-invalid]="accidentForm.get('description')?.invalid && accidentForm.get('description')?.touched"></textarea>
+      <div class="invalid-feedback" *ngIf="accidentForm.get('description')?.invalid && accidentForm.get('description')?.touched">
+        {{ getFieldError('description') }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="natureOfInjury" class="form-label">Nature of Injury</label>
+      <input
+        type="text"
+        class="form-control"
+        id="natureOfInjury"
+        formControlName="natureOfInjury"
+        placeholder="e.g., Sprained ankle, Cut to head">
+    </div>
+
+    <div class="mb-3">
+      <label for="treatmentGiven" class="form-label">Treatment Given</label>
+      <textarea
+        class="form-control"
+        id="treatmentGiven"
+        formControlName="treatmentGiven"
+        rows="3"
+        placeholder="Describe any first aid or medical treatment provided..."></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="actionTaken" class="form-label">Action Taken</label>
+      <textarea
+        class="form-control"
+        id="actionTaken"
+        formControlName="actionTaken"
+        rows="3"
+        placeholder="Describe any follow-up actions taken..."></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="witnesses" class="form-label">Witnesses</label>
+      <input
+        type="text"
+        class="form-control"
+        id="witnesses"
+        formControlName="witnesses"
+        placeholder="Names of any witnesses (comma-separated)">
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+      <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isLoading">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading || accidentForm.invalid">
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        {{ isEditMode ? 'Update Record' : 'Create Record' }}
+      </button>
+    </div>
+  </form>
+</div>
+

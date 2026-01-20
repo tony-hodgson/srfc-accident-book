@@ -1,0 +1,179 @@
+/* Global Styles - Sunderland RFC Theme */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+}
+
+/* Custom styles for accident form */
+.accident-form {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #9e1b32;
+  box-shadow: 0 0 0 0.2rem rgba(158, 27, 50, 0.25);
+}
+
+.btn-primary {
+  background-color: #9e1b32;
+  border-color: #9e1b32;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #7a1526;
+  border-color: #7a1526;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(158, 27, 50, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.alert {
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+}
+
+/* Accident list styles */
+.accident-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border-left: 4px solid #9e1b32;
+}
+
+.accident-card:hover {
+  box-shadow: 0 4px 12px rgba(158, 27, 50, 0.2);
+  transform: translateY(-2px);
+}
+
+.accident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.accident-date {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.accident-details {
+  margin-top: 1rem;
+}
+
+.detail-row {
+  margin-bottom: 0.75rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #495057;
+  margin-right: 0.5rem;
+}
+
+.detail-value {
+  color: #212529;
+}
+
+/* Header styles - Sunderland RFC Theme */
+.page-header {
+  background: linear-gradient(135deg, #9e1b32 0%, #7a1526 100%);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 4px solid #000000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.page-header p {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.95;
+  font-size: 1.1rem;
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Badge styling for age - Sunderland RFC Theme */
+.badge.bg-info {
+  background-color: #9e1b32 !important;
+  color: white;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 4px;
+}
+
+/* Button outline styles */
+.btn-outline-primary {
+  color: #9e1b32;
+  border-color: #9e1b32;
+}
+
+.btn-outline-primary:hover {
+  background-color: #9e1b32;
+  border-color: #9e1b32;
+  color: white;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
