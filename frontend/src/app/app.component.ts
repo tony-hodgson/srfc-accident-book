@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthService } from './services/auth.service';
+import { UserInfo } from './models/auth.model';
 
 @Component({
   selector: 'app-root',
@@ -9,8 +11,16 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="page-header">
       <div class="container">
-        <h1>Sunderland RFC Accident Book</h1>
-        <p>Record and manage accident reports</p>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1>Sunderland RFC Accident Book</h1>
+            <p>Record and manage accident reports</p>
+          </div>
+          <div *ngIf="currentUser" class="user-info">
+            <span class="me-3">Welcome, {{ currentUser.fullName || currentUser.username }}</span>
+            <button class="btn btn-outline-light btn-sm" (click)="logout()">Logout</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="container">
@@ -19,7 +29,24 @@ import { CommonModule } from '@angular/common';
   `,
   styles: []
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'Sunderland RFC Accident Book';
+  currentUser: UserInfo | null = null;
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
 }
 

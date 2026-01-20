@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using AccidentBook.API.Data;
 using AccidentBook.API.Services;
 
@@ -40,8 +43,46 @@ var dbPath = Environment.GetEnvironmentVariable("DATABASE_PATH") ?? "accidents.d
 builder.Services.AddDbContext<AccidentDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
+// Configure JWT Authentication
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key not configured");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "SunderlandRFCAccidentBook";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "SunderlandRFCAccidentBook";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+
+// Configure Google Authentication (optional)
+var googleClientId = builder.Configuration["Google:ClientId"];
+var googleClientSecret = builder.Configuration["Google:ClientSecret"];
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle(options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+        });
+}
+
 // Register services
 builder.Services.AddScoped<IAccidentService, AccidentService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
@@ -58,6 +99,7 @@ if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")))
     app.UseHttpsRedirection();
 }
 app.UseCors("AllowAngularApp");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -125,6 +125,22 @@ body {
   font-size: 1.1rem;
 }
 
+.page-header .user-info {
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.page-header .user-info .btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.page-header .user-info .btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: white;
+}
+
 /* Loading spinner */
 .spinner-border {
   width: 3rem;

@@ -11,6 +11,7 @@ public class AccidentDbContext : DbContext
     }
 
     public DbSet<Accident> Accidents { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,19 @@ public class AccidentDbContext : DbContext
             entity.Property(e => e.TreatmentGiven).HasMaxLength(1000);
             entity.Property(e => e.ActionTaken).HasMaxLength(1000);
             entity.Property(e => e.Witnesses).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(e => e.GoogleId);
+            entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.PasswordHash).HasMaxLength(255);
+            entity.Property(e => e.GoogleId).HasMaxLength(255);
+            entity.Property(e => e.FullName).HasMaxLength(200);
         });
     }
 }

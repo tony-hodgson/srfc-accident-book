@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AccidentBook.API.Models;
 using AccidentBook.API.Services;
@@ -6,6 +7,7 @@ namespace AccidentBook.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AccidentsController : ControllerBase
 {
     private readonly IAccidentService _accidentService;
