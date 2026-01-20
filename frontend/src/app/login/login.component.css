@@ -36,3 +36,43 @@
   box-shadow: 0 0 0 0.2rem rgba(158, 27, 50, 0.25);
 }
 
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #dee2e6;
+}
+
+.divider-text {
+  position: relative;
+  background: white;
+  padding: 0 1rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.google-signin-container {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.google-signin-container > div {
+  width: 100% !important;
+}
+
+/* Ensure Google button is properly styled */
+#google-signin-button iframe,
+#google-signin-button-register iframe {
+  width: 100% !important;
+}
+

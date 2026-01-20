@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { GoogleAuthService } from '../services/google-auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -11,17 +13,19 @@ import { AuthService } from '../services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   loginForm: FormGroup;
   registerForm: FormGroup;
   isLoginMode = true;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  private googleAuthSubscription?: Subscription;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private googleAuthService: GoogleAuthService,
     private router: Router
   ) {
     this.loginForm = this.fb.group({
@@ -41,6 +45,32 @@ export class LoginComponent implements OnInit {
     // If already logged in, redirect to accidents
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/accidents']);
+    }
+
+    // Subscribe to Google authentication
+    this.googleAuthSubscription = this.googleAuthService.user$.subscribe({
+      next: (googleUser) => {
+        this.handleGoogleSignIn(googleUser);
+      },
+      error: (error) => {
+        this.errorMessage = 'Google sign-in failed. Please try again.';
+        this.isLoading = false;
+        console.error('Google auth error:', error);
+      }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // Render Google Sign-In buttons after view initializes
+    setTimeout(() => {
+      this.googleAuthService.renderButton('google-signin-button');
+      this.googleAuthService.renderButton('google-signin-button-register');
+    }, 100);
+  }
+
+  ngOnDestroy(): void {
+    if (this.googleAuthSubscription) {
+      this.googleAuthSubscription.unsubscribe();
     }
   }
 
@@ -92,17 +122,23 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  onGoogleLogin(): void {
-    // Google OAuth implementation
-    // For now, we'll use a simplified approach
-    // In production, you'd integrate with Google Sign-In JavaScript library
-    this.errorMessage = 'Google login will be available after configuring Google OAuth credentials';
-    
-    // TODO: Implement Google OAuth
-    // Example flow:
-    // 1. Load Google Sign-In script
-    // 2. Initialize Google Sign-In
-    // 3. On success, call authService.loginWithGoogle()
+  handleGoogleSignIn(googleUser: any): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.authService.loginWithGoogle({
+      googleId: googleUser.sub,
+      email: googleUser.email,
+      fullName: googleUser.name
+    }).subscribe({
+      next: () => {
+        this.router.navigate(['/accidents']);
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Google sign-in failed. Please try again.';
+        this.isLoading = false;
+      }
+    });
   }
 }
 
