@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && ng build --configuration production"
+  command = "npm ci && ng build --configuration production"
   publish = "dist/accident-book"
 
 [[redirects]]
@@ -9,4 +9,5 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_FLAGS = "--legacy-peer-deps"
 
