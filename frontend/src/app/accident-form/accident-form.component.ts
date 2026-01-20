@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AccidentService } from '../services/accident.service';
 import { Accident } from '../models/accident.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-accident-form',
@@ -12,13 +13,14 @@ import { Accident } from '../models/accident.model';
   templateUrl: './accident-form.component.html',
   styleUrls: ['./accident-form.component.css']
 })
-export class AccidentFormComponent implements OnInit {
-  accidentForm: FormGroup;
+export class AccidentFormComponent implements OnInit, OnDestroy {
+  accidentForm!: FormGroup;
   isEditMode = false;
   accidentId?: number;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  private subscriptions = new Subscription();
 
   constructor(
     private fb: FormBuilder,
@@ -32,7 +34,7 @@ export class AccidentFormComponent implements OnInit {
       location: ['', [Validators.required, Validators.maxLength(200)]],
       opposition: ['', Validators.maxLength(200)],
       personInvolved: ['', [Validators.required, Validators.maxLength(200)]],
-      age: [null, [Validators.min(1), Validators.max(17)]], // Only validate if value is provided
+      age: [null], // Optional field - validation handled in component
       personReporting: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
       natureOfInjury: ['', Validators.maxLength(500)],
@@ -60,8 +62,10 @@ export class AccidentFormComponent implements OnInit {
 
   loadAccident(id: number): void {
     this.isLoading = true;
-    this.accidentService.getAccidentById(id).subscribe({
+    const sub = this.accidentService.getAccidentById(id).subscribe({
       next: (accident) => {
+        if (!this.accidentForm) return;
+        
         // Format date and time for form inputs
         const date = new Date(accident.dateOfAccident);
         const time = new Date(accident.timeOfAccident);
@@ -88,9 +92,30 @@ export class AccidentFormComponent implements OnInit {
         console.error(error);
       }
     });
+    this.subscriptions.add(sub);
   }
 
-  onSubmit(): void {
+  onSubmit(event?: Event): void {
+    // Prevent default form submission
+    if (event) {
+      event.preventDefault();
+    }
+
+    // Prevent double submission and check if form exists
+    if (this.isLoading || !this.accidentForm) {
+      return;
+    }
+
+    // Update form value and validity
+    this.accidentForm.updateValueAndValidity();
+
+    // Mark all fields as touched to show validation errors
+    if (this.accidentForm.invalid) {
+      this.accidentForm.markAllAsTouched();
+      this.errorMessage = 'Please fill in all required fields';
+      return;
+    }
+
     if (this.accidentForm.valid) {
       this.isLoading = true;
       this.errorMessage = '';
@@ -101,13 +126,22 @@ export class AccidentFormComponent implements OnInit {
       // Combine date and time into proper DateTime objects
       const dateTime = new Date(`${formValue.dateOfAccident}T${formValue.timeOfAccident}`);
       
+      // Validate age if provided
+      let ageValue: number | undefined = undefined;
+      if (formValue.age !== null && formValue.age !== '' && formValue.age !== undefined) {
+        const ageNum = typeof formValue.age === 'number' ? formValue.age : parseInt(String(formValue.age), 10);
+        if (!isNaN(ageNum) && ageNum >= 1 && ageNum <= 17) {
+          ageValue = ageNum;
+        }
+      }
+
       const accident: Accident = {
         dateOfAccident: dateTime.toISOString(),
         timeOfAccident: dateTime.toISOString(),
         location: formValue.location,
         opposition: formValue.opposition || '',
         personInvolved: formValue.personInvolved,
-        age: formValue.age ? (typeof formValue.age === 'number' ? formValue.age : parseInt(formValue.age, 10)) : undefined,
+        age: ageValue,
         personReporting: formValue.personReporting,
         description: formValue.description,
         natureOfInjury: formValue.natureOfInjury || '',
@@ -117,47 +151,52 @@ export class AccidentFormComponent implements OnInit {
       };
 
       if (this.isEditMode && this.accidentId) {
-        this.accidentService.updateAccident(this.accidentId, accident).subscribe({
+        const sub = this.accidentService.updateAccident(this.accidentId, accident).subscribe({
           next: () => {
             this.successMessage = 'Accident record updated successfully!';
             setTimeout(() => {
-              this.router.navigate(['/accidents']);
+              if (this.accidentForm) {
+                this.router.navigate(['/accidents']);
+              }
             }, 1500);
           },
           error: (error) => {
-            this.errorMessage = 'Failed to update accident record';
+            this.errorMessage = error.error?.message || 'Failed to update accident record';
             this.isLoading = false;
-            console.error(error);
+            console.error('Update error:', error);
           }
         });
+        this.subscriptions.add(sub);
       } else {
-        this.accidentService.createAccident(accident).subscribe({
+        const sub = this.accidentService.createAccident(accident).subscribe({
           next: () => {
             this.successMessage = 'Accident record created successfully!';
             setTimeout(() => {
-              this.router.navigate(['/accidents']);
+              if (this.accidentForm) {
+                this.router.navigate(['/accidents']);
+              }
             }, 1500);
           },
           error: (error) => {
-            this.errorMessage = 'Failed to create accident record';
+            this.errorMessage = error.error?.message || 'Failed to create accident record';
             this.isLoading = false;
-            console.error(error);
+            console.error('Create error:', error);
           }
         });
+        this.subscriptions.add(sub);
       }
     } else {
       this.errorMessage = 'Please fill in all required fields';
-      Object.keys(this.accidentForm.controls).forEach(key => {
-        const control = this.accidentForm.get(key);
-        if (control?.invalid) {
-          control.markAsTouched();
-        }
-      });
+      // Form is already marked as touched above, no need to iterate
     }
   }
 
   cancel(): void {
     this.router.navigate(['/accidents']);
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   getFieldError(fieldName: string): string {

@@ -9,7 +9,7 @@
     {{ successMessage }}
   </div>
 
-  <form [formGroup]="accidentForm" (ngSubmit)="onSubmit()">
+  <form [formGroup]="accidentForm" (ngSubmit)="onSubmit($event)">
     <div class="row">
       <div class="col-md-6 mb-3">
         <label for="dateOfAccident" class="form-label">Date of Accident *</label>
