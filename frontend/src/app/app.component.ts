@@ -39,7 +39,7 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.authService.currentUser$.subscribe((user: UserInfo | null) => {
       this.currentUser = user;
     });
   }
