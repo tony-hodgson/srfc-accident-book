@@ -5,9 +5,14 @@ This guide provides step-by-step instructions for hosting your Sunderland RFC Ac
 ## Recommended Setup
 
 **Best Free Option:**
-- **Frontend:** Netlify (easiest, best free tier)
-- **Backend:** Render (reliable, good free tier)
+- **Frontend:** Netlify (easiest, best free tier) or Azure Static Web Apps (all Azure)
+- **Backend:** Azure App Service (free tier, always-on) or Render (reliable, good free tier)
 - **Database:** SQLite (included with backend)
+
+**Quick Start - Azure:**
+- See [Option 2: Azure App Service](#option-2-netlify-frontend--azure-app-service-backend---recommended-for-azure) below
+- Free tier (F1) includes: Always available, 1 GB storage, 60 minutes compute/day
+- No credit card charges if you stay on free tier
 
 ## Option 1: Netlify (Frontend) + Render (Backend) - RECOMMENDED
 
@@ -119,7 +124,274 @@ This guide provides step-by-step instructions for hosting your Sunderland RFC Ac
 
 ---
 
-## Option 2: Vercel (Frontend) + Railway (Backend)
+## Option 2: Netlify (Frontend) + Azure App Service (Backend) - RECOMMENDED FOR AZURE
+
+Azure App Service offers a free tier (F1) that is always-on (unlike Render which spins down). This is great for production use.
+
+**Quick Summary:**
+- ✅ Free tier (F1): Always available, 1 GB storage, 60 minutes compute/day
+- ✅ No credit card charges if you stay on free tier
+- ✅ Free SSL certificate included
+- ✅ Custom domain support
+- ⚠️ May sleep after 20 minutes inactivity (first request: 10-30 seconds)
+- 📖 **Quick Reference:** See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for condensed guide
+
+### Part 1: Deploy Backend to Azure App Service
+
+#### Prerequisites
+
+1. **Azure Account**
+   - Go to [azure.microsoft.com](https://azure.microsoft.com)
+   - Sign up for free (requires credit card but won't be charged for free tier)
+   - Get $200 free credit for 30 days (optional, not needed for free tier)
+
+2. **Azure CLI** (Optional but recommended)
+   - Download from [aka.ms/installazurecliwindows](https://aka.ms/installazurecliwindows)
+   - Or use Azure Portal (web interface)
+
+#### Method A: Deploy via Azure Portal (Easiest)
+
+1. **Create App Service**
+   - Go to [portal.azure.com](https://portal.azure.com)
+   - Click "Create a resource"
+   - Search for "Web App" or "App Service"
+   - Click "Create"
+
+2. **Configure Basic Settings**
+   - **Subscription:** Choose your subscription (Free tier available)
+   - **Resource Group:** Create new (e.g., `sunderland-rfc-accident-book`)
+   - **Name:** `sunderland-rfc-accident-api` (must be globally unique)
+   - **Publish:** Code
+   - **Runtime stack:** `.NET 8 (LTS)`
+   - **Operating System:** Linux (recommended) or Windows
+   - **Region:** Choose closest to you (e.g., `UK South`)
+   - **App Service Plan:** 
+     - Click "Create new"
+     - Name: `sunderland-rfc-plan`
+     - **SKU and size:** `Free F1` (1 GB RAM, 1 GB storage)
+     - Click "OK"
+
+3. **Review and Create**
+   - Review settings
+   - Click "Create"
+   - Wait for deployment (2-5 minutes)
+
+4. **Configure Deployment**
+   - Once created, go to your App Service
+   - In left menu: **Deployment Center**
+   - **Source:** GitHub
+   - Authorize GitHub if needed
+   - Select your repository and branch
+   - **Build provider:** GitHub Actions (recommended) or App Service build service
+   - **Workflow file path:** `.github/workflows/azure-deploy.yml` (will be created)
+   - Click "Save"
+
+5. **Configure Application Settings**
+   - Go to **Configuration** → **Application settings**
+   - Add these settings:
+     ```
+     ASPNETCORE_ENVIRONMENT = Production
+     ASPNETCORE_URLS = http://+:8080
+     ```
+   - For CORS, add:
+     ```
+     AllowedOrigins__0 = https://srfcaccidentbook.netlify.app
+     AllowedOrigins__1 = http://localhost:4200
+     ```
+     (Note: Use double underscore `__` for array indices in Azure)
+   - Click "Save"
+
+6. **Configure Authentication (JWT)**
+   - Add to Application settings:
+     ```
+     Jwt__Key = YourSecureJWTKeyHereMinimum32Characters
+     Jwt__Issuer = SunderlandRFCAccidentBook
+     Jwt__Audience = SunderlandRFCAccidentBook
+     ```
+   - **Important:** Generate a secure key (see Security section below)
+
+7. **Configure Google OAuth (Optional)**
+   - Add to Application settings:
+     ```
+     Google__ClientId = your-google-client-id
+     Google__ClientSecret = your-google-client-secret
+     ```
+
+8. **Get Your URL**
+   - Go to **Overview** in your App Service
+   - Copy the URL (e.g., `https://sunderland-rfc-accident-api.azurewebsites.net`)
+
+#### Method B: Deploy via Azure CLI
+
+1. **Login to Azure**
+   ```bash
+   az login
+   ```
+
+2. **Create Resource Group**
+   ```bash
+   az group create --name sunderland-rfc-rg --location uksouth
+   ```
+
+3. **Create App Service Plan (Free Tier)**
+   ```bash
+   az appservice plan create --name sunderland-rfc-plan --resource-group sunderland-rfc-rg --sku FREE --is-linux
+   ```
+
+4. **Create Web App**
+   ```bash
+   az webapp create --resource-group sunderland-rfc-rg --plan sunderland-rfc-plan --name sunderland-rfc-accident-api --runtime "DOTNET|8.0"
+   ```
+
+5. **Configure Deployment from GitHub**
+   ```bash
+   az webapp deployment source config --name sunderland-rfc-accident-api --resource-group sunderland-rfc-rg --repo-url https://github.com/YOUR-USERNAME/YOUR-REPO --branch main --manual-integration
+   ```
+
+6. **Set Application Settings**
+   ```bash
+   az webapp config appsettings set --resource-group sunderland-rfc-rg --name sunderland-rfc-accident-api --settings ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS="http://+:8080"
+   ```
+
+7. **Set CORS Origins**
+   ```bash
+   az webapp cors add --resource-group sunderland-rfc-rg --name sunderland-rfc-accident-api --allowed-origins "https://srfcaccidentbook.netlify.app" "http://localhost:4200"
+   ```
+
+#### Create GitHub Actions Workflow (Auto-Deploy)
+
+Create `.github/workflows/azure-deploy.yml`:
+
+```yaml
+name: Deploy to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Build with dotnet
+      run: dotnet build backend/AccidentBook.API/AccidentBook.API.csproj --configuration Release
+    
+    - name: Publish with dotnet
+      run: dotnet publish backend/AccidentBook.API/AccidentBook.API.csproj --configuration Release --output ./publish
+    
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'sunderland-rfc-accident-api'
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./publish
+```
+
+**To get the publish profile:**
+1. Go to Azure Portal → Your App Service
+2. **Get publish profile** (download button)
+3. Copy contents
+4. Go to GitHub → Your repo → Settings → Secrets → Actions
+5. Add secret: `AZURE_WEBAPP_PUBLISH_PROFILE` (paste publish profile content)
+
+### Part 2: Deploy Frontend to Netlify (or Azure Static Web Apps)
+
+#### Option A: Netlify (Easiest)
+
+Follow the Netlify instructions from Option 1, but use your Azure App Service URL in `environment.prod.ts`:
+```typescript
+apiUrl: 'https://sunderland-rfc-accident-api.azurewebsites.net/api'
+```
+
+#### Option B: Azure Static Web Apps (All Azure)
+
+1. **Create Static Web App**
+   - Go to Azure Portal
+   - Create resource → "Static Web App"
+   - Configure:
+     - **Name:** `sunderland-rfc-accident-frontend`
+     - **Resource Group:** Same as backend
+     - **Plan:** Free
+     - **Deployment details:** GitHub
+     - **Organization/Repository:** Your GitHub repo
+     - **Branch:** `main`
+     - **Build presets:** Custom
+     - **App location:** `frontend`
+     - **Api location:** (leave empty)
+     - **Output location:** `dist/accident-book`
+
+2. **Configure Build**
+   - Azure will create a GitHub Action workflow
+   - Update it if needed:
+     ```yaml
+     app_location: "/frontend"
+     api_location: ""
+     output_location: "dist/accident-book"
+     app_build_command: "npm install && ng build --configuration production"
+     ```
+
+3. **Get Your URL**
+   - Azure provides: `https://sunderland-rfc-accident-frontend.azurestaticapps.net`
+
+4. **Update CORS in Backend**
+   - Add Static Web App URL to allowed origins in Azure App Service
+
+### Azure App Service Configuration
+
+#### Important Settings
+
+1. **Always On** (Free tier doesn't support this, but service stays available)
+   - Free tier: Service may sleep after 20 minutes of inactivity
+   - First request after sleep: 10-30 seconds
+
+2. **HTTPS Only**
+   - Go to **TLS/SSL settings**
+   - Enable "HTTPS Only"
+
+3. **Application Insights** (Optional)
+   - Free tier includes basic monitoring
+   - Enable in **Application Insights** section
+
+4. **Database Storage**
+   - SQLite file stored in `/home` directory
+   - Persists across deployments
+   - **Backup:** Consider exporting data regularly
+
+### Azure Free Tier Limitations
+
+- **Compute:** 60 minutes/day (usually enough for small apps)
+- **Storage:** 1 GB
+- **Memory:** 1 GB RAM
+- **No Always On:** Service may sleep after inactivity
+- **Custom domains:** Supported with free SSL
+
+### Cost
+
+**Free Tier (F1):**
+- ✅ Always free (no credit card charges if you stay on F1)
+- ✅ 1 GB storage
+- ✅ 60 minutes compute/day
+- ✅ Free SSL certificate
+- ✅ Custom domain support
+
+**If you exceed free tier:**
+- Automatically stops (won't charge you)
+- Or upgrade to Basic tier ($13/month) for always-on
+
+---
+
+## Option 3: Vercel (Frontend) + Railway (Backend)
 
 ### Deploy Backend to Railway
 
@@ -203,7 +475,8 @@ Fly.io can host both frontend and backend, but requires more setup.
 | **Render** | ✅ Good | Backend | Spins down after 15min idle |
 | **Railway** | ⚠️ $5 credit | Backend | Credit-based, may cost |
 | **Fly.io** | ✅ 3 VMs | Both | More complex setup |
-| **Azure** | ⚠️ Limited | Backend | Complex, limited free tier |
+| **Azure App Service** | ✅ Free F1 | Backend | Always available, 60min/day compute |
+| **Azure Static Web Apps** | ✅ Free | Frontend | Generous free tier |
 
 ---
 
@@ -325,10 +598,17 @@ Both Netlify and Render support custom domains:
 - Render Backend: ✅ Free (with spin-down)
 - Total: **$0/month**
 
-**Always-On Option:**
+**Always-On Free Option (Azure):**
 - Netlify Frontend: ✅ Free
-- Render Backend: $7/month (always-on)
-- Total: **$7/month**
+- Azure App Service Backend: ✅ Free (F1 tier, always available)
+- Total: **$0/month**
+- ⚠️ Note: 60 minutes compute/day limit, may sleep after 20min inactivity
+
+**Always-On Paid Option:**
+- Netlify Frontend: ✅ Free
+- Azure App Service Backend: $13/month (Basic B1, always-on)
+- OR Render Backend: $7/month (always-on)
+- Total: **$7-13/month**
 
 ---
 
@@ -342,12 +622,79 @@ Both Netlify and Render support custom domains:
 
 ---
 
+## Azure App Service Specific Notes
+
+### Port Configuration
+
+Azure App Service uses the `PORT` environment variable. Your app should listen on:
+- `http://0.0.0.0:${PORT}` or `http://+:8080`
+- The `Program.cs` is already configured to work with Azure
+
+### Database Location
+
+SQLite database is stored in:
+- Linux: `/home` directory (persists across deployments)
+- Windows: `D:\home` directory
+
+**Important:** Data persists, but consider regular backups.
+
+### Scaling
+
+Free tier (F1):
+- Single instance
+- 1 GB RAM
+- 1 GB storage
+- 60 minutes compute/day
+
+If you need more:
+- Basic B1: $13/month (always-on, 1.75 GB RAM)
+- Standard S1: $73/month (always-on, 1.75 GB RAM, auto-scale)
+
+### Monitoring
+
+- **Application Insights:** Free tier includes basic monitoring
+- **Logs:** View in Azure Portal → App Service → Log stream
+- **Metrics:** CPU, memory, requests in Overview
+
+### Custom Domain
+
+1. Go to **Custom domains** in App Service
+2. Add your domain (e.g., `api.sunderlandrugby.com`)
+3. Azure provides free SSL certificate
+4. Update DNS records as instructed
+
+### Troubleshooting Azure Deployment
+
+**Build fails:**
+- Check GitHub Actions logs (if using)
+- Verify .NET 8 SDK is available
+- Check build logs in Azure Portal → Deployment Center
+
+**App not starting:**
+- Check **Log stream** in Azure Portal
+- Verify environment variables are set
+- Check **Diagnose and solve problems** tool
+
+**Slow first request:**
+- Free tier may sleep after 20 minutes
+- First request: 10-30 seconds
+- Subsequent requests: Normal speed
+
+**Database not persisting:**
+- Verify database path uses `/home` (Linux) or `D:\home` (Windows)
+- Check file permissions
+- Consider using Azure SQL Database (paid) for production
+
+---
+
 ## Support Resources
 
 - **Netlify Docs:** https://docs.netlify.com
 - **Render Docs:** https://render.com/docs
 - **Railway Docs:** https://docs.railway.app
 - **Vercel Docs:** https://vercel.com/docs
+- **Azure App Service Docs:** https://docs.microsoft.com/azure/app-service
+- **Azure Static Web Apps Docs:** https://docs.microsoft.com/azure/static-web-apps
 
 Need help? Check the service-specific documentation or community forums!
 

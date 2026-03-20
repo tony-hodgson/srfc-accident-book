@@ -93,8 +93,10 @@ var app = builder.Build();
     app.UseSwaggerUI();
 //}
 
-// Only use HTTPS redirection if not on Render (which handles HTTPS)
-if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")))
+// Only use HTTPS redirection if not on a platform that handles it
+var isRender = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER"));
+var isAzure = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"));
+if (!isRender && !isAzure)
 {
     app.UseHttpsRedirection();
 }

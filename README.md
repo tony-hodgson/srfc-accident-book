@@ -137,8 +137,10 @@ AccidentBook/
 
 **Recommended Free Setup:**
 - **Frontend:** Deploy to [Netlify](https://netlify.com) (free, easy)
-- **Backend:** Deploy to [Render](https://render.com) (free tier available)
+- **Backend:** Deploy to [Azure App Service](https://azure.microsoft.com) (free F1 tier, always-on) or [Render](https://render.com) (free tier, spins down)
 - **Database:** SQLite (included with backend)
+
+**Azure Quick Start:** See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for condensed Azure deployment guide
 
 ### Quick Deploy Steps
 
