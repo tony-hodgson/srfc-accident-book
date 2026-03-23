@@ -4,11 +4,12 @@ namespace AccidentBook.API.Services;
 
 public interface IAuthService
 {
-    Task<AuthResponse?> LoginAsync(LoginRequest request);
-    Task<AuthResponse?> RegisterAsync(RegisterRequest request);
-    Task<AuthResponse?> LoginWithGoogleAsync(string googleId, string email, string? fullName);
+    Task<AuthLoginResult> LoginAsync(LoginRequest request);
+    Task<RegisterInitiatedResponse> RegisterAsync(RegisterRequest request);
+    Task<VerifyEmailResult> VerifyEmailAsync(VerifyEmailRequest request);
+    Task<VerifyEmailResult> ResendVerificationAsync(ResendVerificationRequest request);
+    Task<bool> ApproveRegistrationAsync(Guid token);
+    Task<bool> RejectRegistrationAsync(Guid token);
     Task<User?> GetUserByUsernameAsync(string username);
     Task<User?> GetUserByEmailAsync(string email);
-    Task<User?> GetUserByGoogleIdAsync(string googleId);
 }
-

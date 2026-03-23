@@ -210,14 +210,7 @@ Azure App Service offers a free tier (F1) that is always-on (unlike Render which
      ```
    - **Important:** Generate a secure key (see Security section below)
 
-7. **Configure Google OAuth (Optional)**
-   - Add to Application settings:
-     ```
-     Google__ClientId = your-google-client-id
-     Google__ClientSecret = your-google-client-secret
-     ```
-
-8. **Get Your URL**
+7. **Get Your URL**
    - Go to **Overview** in your App Service
    - Copy the URL (e.g., `https://sunderland-rfc-accident-api.azurewebsites.net`)
 

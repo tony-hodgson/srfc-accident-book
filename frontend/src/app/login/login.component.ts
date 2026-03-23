@@ -1,10 +1,9 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
-import { GoogleAuthService } from '../services/google-auth.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -13,64 +12,43 @@ import { Subscription } from 'rxjs';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   registerForm: FormGroup;
+  verifyForm: FormGroup;
   isLoginMode = true;
+  /** 'register' = show signup form; 'verify' = enter 4-digit code */
+  registerStep: 'register' | 'verify' = 'register';
+  /** Email used for verify/resend (same as registration email) */
+  pendingVerificationEmail = '';
   isLoading = false;
   errorMessage = '';
   successMessage = '';
-  private googleAuthSubscription?: Subscription;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private googleAuthService: GoogleAuthService,
     private router: Router
   ) {
     this.loginForm = this.fb.group({
-      username: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
 
     this.registerForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       fullName: ['', Validators.required]
     });
-  }
 
-  ngOnInit(): void {
-    // If already logged in, redirect to accidents
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/accidents']);
-    }
-
-    // Subscribe to Google authentication
-    this.googleAuthSubscription = this.googleAuthService.user$.subscribe({
-      next: (googleUser) => {
-        this.handleGoogleSignIn(googleUser);
-      },
-      error: (error) => {
-        this.errorMessage = 'Google sign-in failed. Please try again.';
-        this.isLoading = false;
-        console.error('Google auth error:', error);
-      }
+    this.verifyForm = this.fb.group({
+      code: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]]
     });
   }
 
-  ngAfterViewInit(): void {
-    // Render Google Sign-In buttons after view initializes
-    setTimeout(() => {
-      this.googleAuthService.renderButton('google-signin-button');
-      this.googleAuthService.renderButton('google-signin-button-register');
-    }, 100);
-  }
-
-  ngOnDestroy(): void {
-    if (this.googleAuthSubscription) {
-      this.googleAuthSubscription.unsubscribe();
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/accidents']);
     }
   }
 
@@ -78,19 +56,21 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isLoginMode = !this.isLoginMode;
     this.errorMessage = '';
     this.successMessage = '';
+    this.registerStep = 'register';
+    this.pendingVerificationEmail = '';
   }
 
   onLogin(): void {
     if (this.loginForm.valid) {
       this.isLoading = true;
       this.errorMessage = '';
-      
+
       this.authService.login(this.loginForm.value).subscribe({
         next: () => {
           this.router.navigate(['/accidents']);
         },
-        error: (error) => {
-          this.errorMessage = error.error?.message || 'Invalid username or password';
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage = this.readApiError(error) || 'Invalid email or password';
           this.isLoading = false;
         }
       });
@@ -106,14 +86,15 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
       this.successMessage = '';
 
       this.authService.register(this.registerForm.value).subscribe({
-        next: () => {
-          this.successMessage = 'Registration successful! Redirecting...';
-          setTimeout(() => {
-            this.router.navigate(['/accidents']);
-          }, 1500);
+        next: (res) => {
+          this.successMessage = res.message;
+          this.pendingVerificationEmail = res.email;
+          this.registerStep = 'verify';
+          this.verifyForm.patchValue({ code: '' });
+          this.isLoading = false;
         },
-        error: (error) => {
-          this.errorMessage = error.error?.message || 'Registration failed. Username or email may already exist.';
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage = this.readApiError(error) || 'Registration failed. This email may already be registered.';
           this.isLoading = false;
         }
       });
@@ -122,23 +103,69 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  handleGoogleSignIn(googleUser: any): void {
+  onVerifyEmail(): void {
+    const code = this.verifyForm.get('code')?.value as string;
+    if (!this.pendingVerificationEmail || !/^\d{4}$/.test(code)) {
+      this.errorMessage = 'Enter the 4-digit code from your email.';
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
-    this.authService.loginWithGoogle({
-      googleId: googleUser.sub,
-      email: googleUser.email,
-      fullName: googleUser.name
-    }).subscribe({
-      next: () => {
-        this.router.navigate(['/accidents']);
+    this.authService.verifyEmail({ email: this.pendingVerificationEmail, code }).subscribe({
+      next: (res) => {
+        this.successMessage = res.message;
+        this.isLoading = false;
+        this.registerStep = 'register';
+        this.isLoginMode = true;
+        this.pendingVerificationEmail = '';
+        this.registerForm.reset();
+        this.verifyForm.reset();
       },
-      error: (error) => {
-        this.errorMessage = error.error?.message || 'Google sign-in failed. Please try again.';
+      error: (error: HttpErrorResponse) => {
+        const body = error.error as { message?: string } | undefined;
+        this.errorMessage = body?.message || this.readApiError(error) || 'Verification failed.';
         this.isLoading = false;
       }
     });
   }
-}
 
+  resendCode(): void {
+    if (!this.pendingVerificationEmail) {
+      this.errorMessage = 'Email is missing. Go back to registration.';
+      return;
+    }
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.authService.resendVerification(this.pendingVerificationEmail).subscribe({
+      next: (res) => {
+        this.successMessage = res.message;
+        this.isLoading = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        const body = error.error as { message?: string } | undefined;
+        this.errorMessage = body?.message || this.readApiError(error) || 'Could not resend code.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  backToRegisterForm(): void {
+    this.registerStep = 'register';
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.pendingVerificationEmail = '';
+    this.verifyForm.reset();
+  }
+
+  private readApiError(error: HttpErrorResponse): string | null {
+    const e = error.error;
+    if (typeof e === 'string' && e.length) return e;
+    if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
+      return (e as { message: string }).message;
+    }
+    return null;
+  }
+}

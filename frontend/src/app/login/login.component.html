@@ -16,16 +16,18 @@
     <!-- Login Form -->
     <form [formGroup]="loginForm" (ngSubmit)="onLogin()" *ngIf="isLoginMode">
       <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
+        <label for="loginEmail" class="form-label">Email</label>
         <input
-          type="text"
+          type="email"
           class="form-control"
-          id="username"
-          formControlName="username"
-          placeholder="Enter your username"
-          [class.is-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
-        <div class="invalid-feedback" *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
-          Username is required
+          id="loginEmail"
+          formControlName="email"
+          placeholder="Enter your email address"
+          autocomplete="email"
+          [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+        <div class="invalid-feedback" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</span>
+          <span *ngIf="loginForm.get('email')?.errors?.['email']">Enter a valid email address</span>
         </div>
       </div>
 
@@ -48,13 +50,6 @@
         Sign In
       </button>
 
-      <div class="text-center mb-3">
-        <div class="divider mb-3">
-          <span class="divider-text">or</span>
-        </div>
-        <div id="google-signin-button" class="google-signin-container"></div>
-      </div>
-
       <div class="text-center">
         <button type="button" class="btn btn-link" (click)="toggleMode()">
           Don't have an account? Register
@@ -62,22 +57,8 @@
       </div>
     </form>
 
-    <!-- Register Form -->
-    <form [formGroup]="registerForm" (ngSubmit)="onRegister()" *ngIf="!isLoginMode">
-      <div class="mb-3">
-        <label for="regUsername" class="form-label">Username</label>
-        <input
-          type="text"
-          class="form-control"
-          id="regUsername"
-          formControlName="username"
-          placeholder="Choose a username"
-          [class.is-invalid]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
-        <div class="invalid-feedback" *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
-          Username is required (minimum 3 characters)
-        </div>
-      </div>
-
+    <!-- Register Form (step 1) -->
+    <form [formGroup]="registerForm" (ngSubmit)="onRegister()" *ngIf="!isLoginMode && registerStep === 'register'">
       <div class="mb-3">
         <label for="regEmail" class="form-label">Email</label>
         <input
@@ -122,15 +103,8 @@
 
       <button type="submit" class="btn btn-primary w-100 mb-3" [disabled]="isLoading || registerForm.invalid">
         <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-        Register
+        Send verification code
       </button>
-
-      <div class="text-center mb-3">
-        <div class="divider mb-3">
-          <span class="divider-text">or</span>
-        </div>
-        <div id="google-signin-button-register" class="google-signin-container"></div>
-      </div>
 
       <div class="text-center">
         <button type="button" class="btn btn-link" (click)="toggleMode()">
@@ -138,6 +112,41 @@
         </button>
       </div>
     </form>
+
+    <!-- Verify email (step 2) -->
+    <form [formGroup]="verifyForm" (ngSubmit)="onVerifyEmail()" *ngIf="!isLoginMode && registerStep === 'verify'">
+      <p class="text-muted small mb-3">
+        We sent a code to <strong>{{ pendingVerificationEmail }}</strong>. Enter it below (expires in 5 minutes).
+      </p>
+      <div class="mb-3">
+        <label for="verifyCode" class="form-label">Verification code</label>
+        <input
+          type="text"
+          class="form-control text-center fs-4 letter-spacing-code"
+          id="verifyCode"
+          formControlName="code"
+          inputmode="numeric"
+          maxlength="4"
+          placeholder="0000"
+          autocomplete="one-time-code"
+          [class.is-invalid]="verifyForm.get('code')?.invalid && verifyForm.get('code')?.touched">
+        <div class="invalid-feedback" *ngIf="verifyForm.get('code')?.invalid && verifyForm.get('code')?.touched">
+          Enter the 4-digit code from your email
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 mb-2" [disabled]="isLoading || verifyForm.invalid">
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Verify email
+      </button>
+      <button type="button" class="btn btn-outline-secondary w-100 mb-2" (click)="resendCode()" [disabled]="isLoading">
+        Resend code
+      </button>
+      <div class="text-center">
+        <button type="button" class="btn btn-link" (click)="backToRegisterForm()">
+          Back to registration
+        </button>
+      </div>
+    </form>
   </div>
 </div>
-

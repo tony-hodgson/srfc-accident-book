@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AccidentBook.API.Data;
+using AccidentBook.API.Options;
 using AccidentBook.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,22 +68,17 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Configure Google Authentication (optional)
-var googleClientId = builder.Configuration["Google:ClientId"];
-var googleClientSecret = builder.Configuration["Google:ClientSecret"];
-if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
-{
-    builder.Services.AddAuthentication()
-        .AddGoogle(options =>
-        {
-            options.ClientId = googleClientId;
-            options.ClientSecret = googleClientSecret;
-        });
-}
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));
+builder.Services.AddSingleton<IEmailSender, EmailSender>();
 
 // Register services
 builder.Services.AddScoped<IAccidentService, AccidentService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Optional test data: seed 10 accidents on startup, remove on graceful shutdown (see App:SeedTestAccidentsOnStartup)
+builder.Services.AddSingleton<AccidentSeedState>();
+builder.Services.AddHostedService<AccidentSeedHostedService>();
 
 var app = builder.Build();
 
@@ -105,11 +101,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created
+// Ensure database exists and apply SQLite column upgrades for registration flow
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AccidentDbContext>();
-    dbContext.Database.EnsureCreated();
+    SqliteRegistrationSchema.EnsureDatabaseIsReady(dbContext);
 }
 
 app.Run();

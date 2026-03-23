@@ -39,12 +39,12 @@ public class AccidentDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Username).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
-            entity.HasIndex(e => e.GoogleId);
+            entity.HasIndex(e => e.PendingApprovalToken).IsUnique();
             entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
-            entity.Property(e => e.GoogleId).HasMaxLength(255);
             entity.Property(e => e.FullName).HasMaxLength(200);
+            entity.Property(e => e.EmailVerificationCodeHash).HasMaxLength(255);
         });
     }
 }

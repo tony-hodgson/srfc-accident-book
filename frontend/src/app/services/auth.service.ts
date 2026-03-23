@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
-import { AuthResponse, LoginRequest, RegisterRequest, UserInfo, GoogleLoginRequest } from '../models/auth.model';
+import {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  RegisterInitiatedResponse,
+  UserInfo,
+  VerifyEmailRequest,
+  VerifyEmailResult,
+} from '../models/auth.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -13,7 +21,6 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // Load user from localStorage on service init
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
     if (token && userStr) {
@@ -31,16 +38,16 @@ export class AuthService {
     );
   }
 
-  register(request: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, request).pipe(
-      tap(response => this.handleAuthResponse(response))
-    );
+  register(request: RegisterRequest): Observable<RegisterInitiatedResponse> {
+    return this.http.post<RegisterInitiatedResponse>(`${this.apiUrl}/register`, request);
   }
 
-  loginWithGoogle(request: GoogleLoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/google`, request).pipe(
-      tap(response => this.handleAuthResponse(response))
-    );
+  verifyEmail(request: VerifyEmailRequest): Observable<VerifyEmailResult> {
+    return this.http.post<VerifyEmailResult>(`${this.apiUrl}/verify-email`, request);
+  }
+
+  resendVerification(email: string): Observable<VerifyEmailResult> {
+    return this.http.post<VerifyEmailResult>(`${this.apiUrl}/resend-verification`, { email });
   }
 
   getCurrentUser(): Observable<UserInfo> {
@@ -65,7 +72,7 @@ export class AuthService {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const expiresAt = payload.exp * 1000;
       return Date.now() < expiresAt;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -88,4 +95,3 @@ export class AuthService {
     });
   }
 }
-

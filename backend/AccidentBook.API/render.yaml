@@ -10,4 +10,12 @@ services:
         value: Production
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:10000
+      # Public URL of this API (no trailing slash) — used in admin approval emails
+      - key: App__PublicBaseUrl
+        value: https://YOUR-RENDER-SERVICE.onrender.com
+      - key: App__AdminNotificationEmail
+        value: hodgson.tony@gmail.com
+      # Set Email__Enabled true and SMTP settings when ready to send real emails
+      - key: Email__Enabled
+        value: "false"
 

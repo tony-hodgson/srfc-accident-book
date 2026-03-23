@@ -34,10 +34,9 @@ export class AccidentListComponent implements OnInit {
         this.accidents = accidents;
         this.isLoading = false;
       },
-      error: (error) => {
+      error: () => {
         this.errorMessage = 'Failed to load accident records. Please check if the API is running.';
         this.isLoading = false;
-        console.error(error);
       }
     });
   }
@@ -52,9 +51,8 @@ export class AccidentListComponent implements OnInit {
         next: () => {
           this.loadAccidents();
         },
-        error: (error) => {
+        error: () => {
           this.errorMessage = 'Failed to delete accident record';
-          console.error(error);
         }
       });
     }

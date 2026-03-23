@@ -1,13 +1,27 @@
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface RegisterRequest {
-  username: string;
   email: string;
   password: string;
   fullName: string;
+}
+
+export interface RegisterInitiatedResponse {
+  message: string;
+  email: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerifyEmailResult {
+  success: boolean;
+  message: string;
 }
 
 export interface AuthResponse {
@@ -23,10 +37,3 @@ export interface UserInfo {
   email: string;
   fullName?: string;
 }
-
-export interface GoogleLoginRequest {
-  googleId: string;
-  email: string;
-  fullName?: string;
-}
-
