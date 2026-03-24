@@ -69,7 +69,12 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+// Bind HTTP email settings from both keys:
+// - EmailApi (current)
+// - ApiEmail (legacy/misnamed)
+// Later Configure() calls override earlier values, so ApiEmail can override EmailApi.
 builder.Services.Configure<HttpEmailOptions>(builder.Configuration.GetSection(HttpEmailOptions.SectionName));
+builder.Services.Configure<HttpEmailOptions>(builder.Configuration.GetSection("ApiEmail"));
 builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));
 builder.Services.AddHttpClient<ResendEmailSender>();
 builder.Services.AddSingleton<EmailSender>();
