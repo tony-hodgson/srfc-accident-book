@@ -1,0 +1,341 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.29.47.4906",
+      "templateHash": "10817094512972308566"
+    }
+  },
+  "parameters": {
+    "resourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resource group to create"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure region for all resources"
+      }
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "App Service plan name"
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Globally unique web app name (letters, numbers, hyphens)"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "F1",
+      "metadata": {
+        "description": "App Service SKU"
+      }
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "metadata": {
+        "description": "App Service tier"
+      }
+    },
+    "allowedOrigins": {
+      "type": "array",
+      "metadata": {
+        "description": "CORS allowed origins for the frontend"
+      }
+    },
+    "jwtKey": {
+      "type": "securestring"
+    },
+    "jwtIssuer": {
+      "type": "string",
+      "defaultValue": "SunderlandRFCAccidentBook"
+    },
+    "jwtAudience": {
+      "type": "string",
+      "defaultValue": "SunderlandRFCAccidentBook"
+    },
+    "databasePath": {
+      "type": "string",
+      "defaultValue": "/home/data/accidents.db"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "accidentBookAppService",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "appServicePlanName": {
+            "value": "[parameters('appServicePlanName')]"
+          },
+          "webAppName": {
+            "value": "[parameters('webAppName')]"
+          },
+          "skuName": {
+            "value": "[parameters('skuName')]"
+          },
+          "skuTier": {
+            "value": "[parameters('skuTier')]"
+          },
+          "allowedOrigins": {
+            "value": "[parameters('allowedOrigins')]"
+          },
+          "jwtKey": {
+            "value": "[parameters('jwtKey')]"
+          },
+          "jwtIssuer": {
+            "value": "[parameters('jwtIssuer')]"
+          },
+          "jwtAudience": {
+            "value": "[parameters('jwtAudience')]"
+          },
+          "databasePath": {
+            "value": "[parameters('databasePath')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.29.47.4906",
+              "templateHash": "15698816757498071063"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region (e.g. uksouth, westeurope)"
+              }
+            },
+            "appServicePlanName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the App Service plan"
+              }
+            },
+            "webAppName": {
+              "type": "string",
+              "metadata": {
+                "description": "Globally unique name for the Web App (e.g. srfc-accident-api-xyz)"
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "F1",
+              "metadata": {
+                "description": "App Service SKU: F1 (Free), B1 (Basic), etc."
+              }
+            },
+            "skuTier": {
+              "type": "string",
+              "defaultValue": "Free",
+              "metadata": {
+                "description": "App Service tier: Free, Basic, Standard"
+              }
+            },
+            "allowedOrigins": {
+              "type": "array",
+              "defaultValue": [
+                "http://localhost:4200"
+              ],
+              "metadata": {
+                "description": "CORS origins for the Angular app (include https://your-site.netlify.app)"
+              }
+            },
+            "jwtKey": {
+              "type": "securestring",
+              "metadata": {
+                "description": "JWT signing key (min 32 chars). Use a strong secret in production."
+              }
+            },
+            "jwtIssuer": {
+              "type": "string",
+              "defaultValue": "SunderlandRFCAccidentBook",
+              "metadata": {
+                "description": "JWT issuer"
+              }
+            },
+            "jwtAudience": {
+              "type": "string",
+              "defaultValue": "SunderlandRFCAccidentBook",
+              "metadata": {
+                "description": "JWT audience"
+              }
+            },
+            "databasePath": {
+              "type": "string",
+              "defaultValue": "/home/data/accidents.db",
+              "metadata": {
+                "description": "SQLite database file path on Linux App Service"
+              }
+            }
+          },
+          "variables": {
+            "copy": [
+              {
+                "name": "corsAppSettings",
+                "count": "[length(range(0, length(parameters('allowedOrigins'))))]",
+                "input": {
+                  "name": "[format('AllowedOrigins__{0}', range(0, length(parameters('allowedOrigins')))[copyIndex('corsAppSettings')])]",
+                  "value": "[parameters('allowedOrigins')[range(0, length(parameters('allowedOrigins')))[copyIndex('corsAppSettings')]]]"
+                }
+              }
+            ],
+            "jwtAppSettings": [
+              {
+                "name": "Jwt__Key",
+                "value": "[parameters('jwtKey')]"
+              },
+              {
+                "name": "Jwt__Issuer",
+                "value": "[parameters('jwtIssuer')]"
+              },
+              {
+                "name": "Jwt__Audience",
+                "value": "[parameters('jwtAudience')]"
+              }
+            ],
+            "baseAppSettings": [
+              {
+                "name": "ASPNETCORE_ENVIRONMENT",
+                "value": "Production"
+              },
+              {
+                "name": "WEBSITE_RUN_FROM_PACKAGE",
+                "value": "0"
+              },
+              {
+                "name": "ASPNETCORE_URLS",
+                "value": "http://+:8080"
+              },
+              {
+                "name": "DATABASE_PATH",
+                "value": "[parameters('databasePath')]"
+              }
+            ],
+            "allAppSettings": "[concat(variables('baseAppSettings'), variables('corsAppSettings'), variables('jwtAppSettings'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "kind": "linux",
+              "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('skuTier')]",
+                "capacity": 1
+              },
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('webAppName')]",
+              "location": "[parameters('location')]",
+              "kind": "app,linux",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                "httpsOnly": true,
+                "clientAffinityEnabled": false,
+                "siteConfig": {
+                  "linuxFxVersion": "DOTNETCORE|8.0",
+                  "alwaysOn": "[and(not(equals(parameters('skuName'), 'F1')), not(equals(parameters('skuName'), 'D1')))]",
+                  "minTlsVersion": "1.2",
+                  "http20Enabled": true,
+                  "ftpsState": "Disabled",
+                  "appSettings": "[variables('allAppSettings')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "webAppName": {
+              "type": "string",
+              "value": "[parameters('webAppName')]"
+            },
+            "webAppHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2023-01-01').defaultHostName]"
+            },
+            "webAppUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2023-01-01').defaultHostName)]"
+            },
+            "apiBaseUrl": {
+              "type": "string",
+              "value": "[format('https://{0}/api', reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2023-01-01').defaultHostName)]"
+            },
+            "principalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2023-01-01', 'full').identity.principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    },
+    "webAppName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'accidentBookAppService'), '2022-09-01').outputs.webAppName.value]"
+    },
+    "webAppUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'accidentBookAppService'), '2022-09-01').outputs.webAppUrl.value]"
+    },
+    "apiBaseUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'accidentBookAppService'), '2022-09-01').outputs.apiBaseUrl.value]"
+    },
+    "swaggerUrl": {
+      "type": "string",
+      "value": "[format('{0}/swagger', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'accidentBookAppService'), '2022-09-01').outputs.webAppUrl.value)]"
+    }
+  }
+}
