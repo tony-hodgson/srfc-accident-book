@@ -1,0 +1,4 @@
+[config]
+SCM_DO_BUILD_DURING_DEPLOYMENT=true
+BUILD_COMMAND=dotnet restore && dotnet publish -c Release -o %HOME%\site\wwwroot
+PROJECT=AccidentBook.API.csproj

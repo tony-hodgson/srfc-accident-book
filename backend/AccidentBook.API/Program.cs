@@ -69,8 +69,18 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.Configure<HttpEmailOptions>(builder.Configuration.GetSection(HttpEmailOptions.SectionName));
 builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));
-builder.Services.AddSingleton<IEmailSender, EmailSender>();
+builder.Services.AddHttpClient<ResendEmailSender>();
+builder.Services.AddSingleton<EmailSender>();
+builder.Services.AddScoped<IEmailSender>(sp =>
+{
+    var apiOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<HttpEmailOptions>>().Value;
+    if (apiOptions.Enabled)
+        return sp.GetRequiredService<ResendEmailSender>();
+
+    return sp.GetRequiredService<EmailSender>();
+});
 
 // Register services
 builder.Services.AddScoped<IAccidentService, AccidentService>();
